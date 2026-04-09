@@ -1,0 +1,550 @@
+{
+  "terms": {
+    "eps": {
+      "canonical_form": "earnings per share",
+      "abbreviations": ["EPS"],
+      "synonyms": ["net income per share", "basic earnings per share", "diluted earnings per share", "income per share"],
+      "components": ["net income", "weighted average shares outstanding", "shares outstanding"],
+      "category": "profitability"
+    },
+    "roe": {
+      "canonical_form": "return on equity",
+      "abbreviations": ["ROE"],
+      "synonyms": ["return on stockholders equity", "return on shareholders equity"],
+      "components": ["net income", "shareholders equity", "stockholders equity", "total equity"],
+      "category": "profitability"
+    },
+    "roa": {
+      "canonical_form": "return on assets",
+      "abbreviations": ["ROA"],
+      "synonyms": ["return on total assets", "asset return"],
+      "components": ["net income", "total assets"],
+      "category": "profitability"
+    },
+    "roic": {
+      "canonical_form": "return on invested capital",
+      "abbreviations": ["ROIC", "ROC"],
+      "synonyms": ["return on capital employed", "return on capital"],
+      "components": ["net income", "total equity", "total debt", "invested capital", "long-term debt"],
+      "category": "profitability"
+    },
+    "roi": {
+      "canonical_form": "return on investment",
+      "abbreviations": ["ROI"],
+      "synonyms": ["investment return"],
+      "components": ["net income", "total investment", "total assets"],
+      "category": "profitability"
+    },
+    "ebitda": {
+      "canonical_form": "earnings before interest taxes depreciation and amortization",
+      "abbreviations": ["EBITDA"],
+      "synonyms": ["operating income before depreciation and amortization"],
+      "components": ["operating income", "depreciation", "amortization", "interest expense", "income tax expense"],
+      "category": "profitability"
+    },
+    "ebit": {
+      "canonical_form": "earnings before interest and taxes",
+      "abbreviations": ["EBIT"],
+      "synonyms": ["operating income", "income from operations", "operating profit"],
+      "components": ["revenue", "cost of sales", "operating expenses"],
+      "category": "profitability"
+    },
+    "gross_margin": {
+      "canonical_form": "gross margin",
+      "abbreviations": [],
+      "synonyms": ["gross profit margin", "gross profit ratio", "gross profit percentage"],
+      "components": ["total net sales", "net sales", "cost of sales", "cost of revenue", "cost of goods sold", "gross profit"],
+      "category": "profitability"
+    },
+    "operating_margin": {
+      "canonical_form": "operating margin",
+      "abbreviations": [],
+      "synonyms": ["operating profit margin", "operating income margin", "operating income ratio"],
+      "components": ["operating income", "total net sales", "net sales", "operating expenses"],
+      "category": "profitability"
+    },
+    "net_margin": {
+      "canonical_form": "net margin",
+      "abbreviations": [],
+      "synonyms": ["net profit margin", "profit margin", "net income margin", "net profit ratio", "net income ratio"],
+      "components": ["net income", "total net sales", "net sales"],
+      "category": "profitability"
+    },
+    "revenue": {
+      "canonical_form": "total net sales",
+      "abbreviations": [],
+      "synonyms": ["revenue", "net revenue", "total revenue", "net sales", "total sales", "sales", "net revenues"],
+      "components": ["products", "services"],
+      "category": "income_statement"
+    },
+    "cost_of_sales": {
+      "canonical_form": "cost of sales",
+      "abbreviations": ["COGS"],
+      "synonyms": ["cost of revenue", "cost of goods sold", "cost of products", "cost of services", "cost of revenues"],
+      "components": ["product costs", "service costs", "direct costs"],
+      "category": "income_statement"
+    },
+    "gross_profit": {
+      "canonical_form": "gross profit",
+      "abbreviations": [],
+      "synonyms": ["gross margin dollars"],
+      "components": ["total net sales", "net sales", "cost of sales"],
+      "category": "income_statement"
+    },
+    "operating_income": {
+      "canonical_form": "operating income",
+      "abbreviations": [],
+      "synonyms": ["income from operations", "operating profit", "operating earnings"],
+      "components": ["total net sales", "net sales", "cost of sales", "operating expenses", "research and development", "selling general and administrative"],
+      "category": "income_statement"
+    },
+    "net_income": {
+      "canonical_form": "net income",
+      "abbreviations": [],
+      "synonyms": ["net profit", "net earnings", "net income attributable to shareholders", "net income attributable to the company", "bottom line"],
+      "components": ["total net sales", "total costs and expenses", "income before taxes", "income tax expense"],
+      "category": "income_statement"
+    },
+    "income_tax": {
+      "canonical_form": "income tax expense",
+      "abbreviations": [],
+      "synonyms": ["provision for income taxes", "income taxes", "tax expense", "income tax provision"],
+      "components": ["income before taxes", "effective tax rate"],
+      "category": "income_statement"
+    },
+    "rd_expense": {
+      "canonical_form": "research and development expense",
+      "abbreviations": ["R&D"],
+      "synonyms": ["research and development costs", "R&D expense", "research and development expenditures", "research and development"],
+      "components": [],
+      "category": "income_statement"
+    },
+    "sga_expense": {
+      "canonical_form": "selling general and administrative expenses",
+      "abbreviations": ["SG&A"],
+      "synonyms": ["selling and administrative expenses", "selling general and administrative", "selling and marketing expenses", "general and administrative expenses"],
+      "components": [],
+      "category": "income_statement"
+    },
+    "depreciation": {
+      "canonical_form": "depreciation and amortization",
+      "abbreviations": ["D&A"],
+      "synonyms": ["depreciation expense", "amortization expense", "depreciation", "amortization"],
+      "components": [],
+      "category": "income_statement"
+    },
+    "interest_expense": {
+      "canonical_form": "interest expense",
+      "abbreviations": [],
+      "synonyms": ["interest costs", "interest paid", "interest charges"],
+      "components": ["long-term debt", "total debt", "interest rate"],
+      "category": "income_statement"
+    },
+    "other_income": {
+      "canonical_form": "other income expense net",
+      "abbreviations": [],
+      "synonyms": ["other income", "other expense", "non-operating income", "other income net", "other income expense"],
+      "components": ["interest income", "interest expense", "gains losses on investments"],
+      "category": "income_statement"
+    },
+    "total_assets": {
+      "canonical_form": "total assets",
+      "abbreviations": [],
+      "synonyms": ["total assets of the company"],
+      "components": ["current assets", "non-current assets", "property plant and equipment", "goodwill", "intangible assets", "cash and cash equivalents"],
+      "category": "balance_sheet"
+    },
+    "total_liabilities": {
+      "canonical_form": "total liabilities",
+      "abbreviations": [],
+      "synonyms": ["total debts and obligations", "total liabilities of the company"],
+      "components": ["current liabilities", "long-term liabilities", "long-term debt", "accounts payable", "accrued liabilities"],
+      "category": "balance_sheet"
+    },
+    "shareholders_equity": {
+      "canonical_form": "shareholders equity",
+      "abbreviations": [],
+      "synonyms": ["stockholders equity", "total equity", "shareholders equity", "stockholders equity", "total shareholders equity", "total stockholders equity", "shareholders deficit"],
+      "components": ["common stock", "additional paid-in capital", "retained earnings", "accumulated other comprehensive income", "treasury stock"],
+      "category": "balance_sheet"
+    },
+    "current_assets": {
+      "canonical_form": "total current assets",
+      "abbreviations": [],
+      "synonyms": ["current assets"],
+      "components": ["cash and cash equivalents", "short-term investments", "accounts receivable", "inventories", "prepaid expenses"],
+      "category": "balance_sheet"
+    },
+    "current_liabilities": {
+      "canonical_form": "total current liabilities",
+      "abbreviations": [],
+      "synonyms": ["current liabilities", "current portion of liabilities"],
+      "components": ["accounts payable", "accrued expenses", "current portion of long-term debt", "short-term debt", "deferred revenue"],
+      "category": "balance_sheet"
+    },
+    "cash_and_equivalents": {
+      "canonical_form": "cash and cash equivalents",
+      "abbreviations": [],
+      "synonyms": ["cash", "cash equivalents", "cash and equivalents", "cash and short-term investments"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "accounts_receivable": {
+      "canonical_form": "accounts receivable",
+      "abbreviations": ["AR"],
+      "synonyms": ["net receivables", "trade receivables", "receivables"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "inventory": {
+      "canonical_form": "inventories",
+      "abbreviations": [],
+      "synonyms": ["inventory", "stock", "finished goods", "work in process", "raw materials"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "ppe": {
+      "canonical_form": "property plant and equipment",
+      "abbreviations": ["PP&E"],
+      "synonyms": ["fixed assets", "plant property and equipment", "property and equipment"],
+      "components": ["land", "buildings", "machinery", "accumulated depreciation"],
+      "category": "balance_sheet"
+    },
+    "goodwill": {
+      "canonical_form": "goodwill",
+      "abbreviations": [],
+      "synonyms": [],
+      "components": ["acquisitions", "purchase price allocation"],
+      "category": "balance_sheet"
+    },
+    "intangible_assets": {
+      "canonical_form": "intangible assets net",
+      "abbreviations": [],
+      "synonyms": ["intangible assets", "net intangible assets"],
+      "components": ["patents", "trademarks", "customer relationships", "acquired technology"],
+      "category": "balance_sheet"
+    },
+    "long_term_debt": {
+      "canonical_form": "long-term debt",
+      "abbreviations": [],
+      "synonyms": ["long-term borrowings", "term debt", "total long-term debt", "senior notes", "bonds"],
+      "components": ["current portion of long-term debt", "interest rate", "maturity"],
+      "category": "balance_sheet"
+    },
+    "short_term_debt": {
+      "canonical_form": "short-term debt",
+      "abbreviations": [],
+      "synonyms": ["short-term borrowings", "commercial paper", "current portion of long-term debt"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "total_debt": {
+      "canonical_form": "total debt",
+      "abbreviations": [],
+      "synonyms": ["total borrowings", "total indebtedness"],
+      "components": ["long-term debt", "short-term debt", "current portion of long-term debt"],
+      "category": "balance_sheet"
+    },
+    "deferred_revenue": {
+      "canonical_form": "deferred revenue",
+      "abbreviations": [],
+      "synonyms": ["unearned revenue", "contract liabilities", "advance payments", "deferred income", "customer deposits"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "retained_earnings": {
+      "canonical_form": "retained earnings",
+      "abbreviations": ["RE"],
+      "synonyms": ["accumulated earnings", "retained deficit", "accumulated deficit"],
+      "components": ["net income", "dividends"],
+      "category": "balance_sheet"
+    },
+    "treasury_stock": {
+      "canonical_form": "treasury stock",
+      "abbreviations": [],
+      "synonyms": ["repurchased shares", "common stock in treasury"],
+      "components": ["share repurchases"],
+      "category": "balance_sheet"
+    },
+    "accounts_payable": {
+      "canonical_form": "accounts payable",
+      "abbreviations": ["AP"],
+      "synonyms": ["trade payables", "payables"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "accrued_liabilities": {
+      "canonical_form": "accrued liabilities",
+      "abbreviations": [],
+      "synonyms": ["accrued expenses", "accrued compensation", "accrued expenses and other current liabilities"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "shares_outstanding": {
+      "canonical_form": "shares outstanding",
+      "abbreviations": [],
+      "synonyms": ["weighted average shares", "common shares outstanding", "shares issued and outstanding", "outstanding shares", "common stock outstanding"],
+      "components": [],
+      "category": "balance_sheet"
+    },
+    "operating_cash_flow": {
+      "canonical_form": "cash generated by operating activities",
+      "abbreviations": ["OCF", "CFO"],
+      "synonyms": ["cash flow from operations", "operating cash flow", "cash provided by operating activities", "net cash from operating activities", "cash generated from operations"],
+      "components": ["net income", "depreciation and amortization", "share-based compensation", "changes in working capital", "changes in accounts receivable", "changes in accounts payable", "changes in inventory"],
+      "category": "cash_flow"
+    },
+    "free_cash_flow": {
+      "canonical_form": "free cash flow",
+      "abbreviations": ["FCF"],
+      "synonyms": [],
+      "components": ["cash generated by operating activities", "capital expenditures", "payments for acquisition of property plant and equipment", "purchases of property and equipment"],
+      "category": "cash_flow"
+    },
+    "capital_expenditure": {
+      "canonical_form": "capital expenditures",
+      "abbreviations": ["CapEx", "CAPEX"],
+      "synonyms": ["payments for acquisition of property plant and equipment", "purchases of property and equipment", "capital spending", "purchases of property plant and equipment"],
+      "components": [],
+      "category": "cash_flow"
+    },
+    "investing_cash_flow": {
+      "canonical_form": "cash used in investing activities",
+      "abbreviations": [],
+      "synonyms": ["cash flow from investing", "net cash from investing activities", "cash used for investing activities"],
+      "components": ["capital expenditures", "acquisitions", "purchases of investments", "sales of investments", "maturities of investments"],
+      "category": "cash_flow"
+    },
+    "financing_cash_flow": {
+      "canonical_form": "cash used in financing activities",
+      "abbreviations": [],
+      "synonyms": ["cash flow from financing", "net cash from financing activities", "cash used for financing activities"],
+      "components": ["dividends paid", "share repurchases", "repurchases of common stock", "proceeds from debt", "repayments of debt"],
+      "category": "cash_flow"
+    },
+    "dividend": {
+      "canonical_form": "dividends paid",
+      "abbreviations": [],
+      "synonyms": ["cash dividends paid", "dividend payments", "dividends declared", "dividend per share"],
+      "components": [],
+      "category": "cash_flow"
+    },
+    "share_repurchase": {
+      "canonical_form": "share repurchases",
+      "abbreviations": [],
+      "synonyms": ["stock repurchases", "repurchase of common stock", "repurchase of shares", "buyback", "share buyback"],
+      "components": [],
+      "category": "cash_flow"
+    },
+    "current_ratio": {
+      "canonical_form": "current ratio",
+      "abbreviations": [],
+      "synonyms": ["working capital ratio"],
+      "components": ["current assets", "total current assets", "current liabilities", "total current liabilities"],
+      "category": "liquidity"
+    },
+    "quick_ratio": {
+      "canonical_form": "quick ratio",
+      "abbreviations": [],
+      "synonyms": ["acid-test ratio", "acid test ratio"],
+      "components": ["current assets", "current liabilities", "inventories", "cash and cash equivalents", "accounts receivable"],
+      "category": "liquidity"
+    },
+    "cash_ratio": {
+      "canonical_form": "cash ratio",
+      "abbreviations": [],
+      "synonyms": [],
+      "components": ["cash and cash equivalents", "short-term investments", "current liabilities"],
+      "category": "liquidity"
+    },
+    "debt_to_equity": {
+      "canonical_form": "debt to equity ratio",
+      "abbreviations": ["D/E"],
+      "synonyms": ["debt-equity ratio", "debt to equity", "leverage ratio"],
+      "components": ["total debt", "long-term debt", "total equity", "shareholders equity", "stockholders equity"],
+      "category": "leverage"
+    },
+    "debt_to_assets": {
+      "canonical_form": "debt to assets ratio",
+      "abbreviations": ["D/A"],
+      "synonyms": ["debt ratio", "total debt to total assets"],
+      "components": ["total debt", "total assets", "total liabilities"],
+      "category": "leverage"
+    },
+    "interest_coverage": {
+      "canonical_form": "interest coverage ratio",
+      "abbreviations": [],
+      "synonyms": ["times interest earned", "interest coverage"],
+      "components": ["operating income", "EBIT", "interest expense"],
+      "category": "leverage"
+    },
+    "asset_turnover": {
+      "canonical_form": "asset turnover ratio",
+      "abbreviations": [],
+      "synonyms": ["total asset turnover", "asset turnover"],
+      "components": ["total net sales", "net sales", "total assets"],
+      "category": "efficiency"
+    },
+    "inventory_turnover": {
+      "canonical_form": "inventory turnover ratio",
+      "abbreviations": [],
+      "synonyms": ["inventory turnover", "stock turnover"],
+      "components": ["cost of sales", "cost of goods sold", "inventories", "average inventory"],
+      "category": "efficiency"
+    },
+    "receivable_turnover": {
+      "canonical_form": "accounts receivable turnover",
+      "abbreviations": [],
+      "synonyms": ["receivable turnover", "receivables turnover"],
+      "components": ["total net sales", "net sales", "accounts receivable", "net receivables"],
+      "category": "efficiency"
+    },
+    "pe_ratio": {
+      "canonical_form": "price earnings ratio",
+      "abbreviations": ["P/E"],
+      "synonyms": ["price to earnings", "P/E ratio", "PE ratio"],
+      "components": ["stock price", "earnings per share", "EPS", "net income", "shares outstanding"],
+      "category": "valuation"
+    },
+    "pb_ratio": {
+      "canonical_form": "price to book ratio",
+      "abbreviations": ["P/B"],
+      "synonyms": ["price to book value", "P/B ratio", "market to book ratio"],
+      "components": ["stock price", "book value per share", "shareholders equity", "shares outstanding"],
+      "category": "valuation"
+    },
+    "ev_ebitda": {
+      "canonical_form": "enterprise value to EBITDA",
+      "abbreviations": ["EV/EBITDA"],
+      "synonyms": ["EV to EBITDA"],
+      "components": ["enterprise value", "market capitalization", "total debt", "cash", "EBITDA", "operating income"],
+      "category": "valuation"
+    },
+    "book_value": {
+      "canonical_form": "book value per share",
+      "abbreviations": ["BVPS"],
+      "synonyms": ["book value"],
+      "components": ["shareholders equity", "total equity", "shares outstanding", "preferred stock"],
+      "category": "valuation"
+    },
+    "income_statement": {
+      "canonical_form": "consolidated statements of income",
+      "abbreviations": [],
+      "synonyms": ["statement of operations", "profit and loss statement", "income statement", "statements of operations", "consolidated statements of operations"],
+      "components": ["revenue", "cost of sales", "operating income", "net income"],
+      "category": "financial_statement"
+    },
+    "balance_sheet": {
+      "canonical_form": "consolidated balance sheets",
+      "abbreviations": [],
+      "synonyms": ["statement of financial position", "balance sheet", "statements of financial position"],
+      "components": ["assets", "liabilities", "equity"],
+      "category": "financial_statement"
+    },
+    "cash_flow_statement": {
+      "canonical_form": "consolidated statements of cash flows",
+      "abbreviations": [],
+      "synonyms": ["cash flow statement", "statement of cash flows", "statements of cash flows"],
+      "components": ["operating activities", "investing activities", "financing activities"],
+      "category": "financial_statement"
+    },
+    "equity_statement": {
+      "canonical_form": "consolidated statements of shareholders equity",
+      "abbreviations": [],
+      "synonyms": ["statement of shareholders equity", "statements of stockholders equity", "statement of changes in equity"],
+      "components": ["common stock", "retained earnings", "accumulated other comprehensive income", "treasury stock"],
+      "category": "financial_statement"
+    },
+    "comprehensive_income": {
+      "canonical_form": "comprehensive income",
+      "abbreviations": [],
+      "synonyms": ["other comprehensive income", "total comprehensive income", "statements of comprehensive income"],
+      "components": ["net income", "unrealized gains losses", "foreign currency translation"],
+      "category": "financial_statement"
+    },
+    "gaap": {
+      "canonical_form": "generally accepted accounting principles",
+      "abbreviations": ["GAAP"],
+      "synonyms": ["GAAP basis", "GAAP measures"],
+      "components": [],
+      "category": "accounting"
+    },
+    "non_gaap": {
+      "canonical_form": "non-GAAP measures",
+      "abbreviations": [],
+      "synonyms": ["adjusted earnings", "pro forma earnings", "adjusted net income", "adjusted operating income", "non-GAAP earnings"],
+      "components": [],
+      "category": "accounting"
+    },
+    "share_based_compensation": {
+      "canonical_form": "share-based compensation",
+      "abbreviations": ["SBC"],
+      "synonyms": ["stock-based compensation", "stock compensation", "equity compensation", "stock options", "restricted stock units", "RSU"],
+      "components": [],
+      "category": "accounting"
+    },
+    "goodwill_impairment": {
+      "canonical_form": "goodwill impairment",
+      "abbreviations": [],
+      "synonyms": ["impairment charge", "impairment of goodwill", "goodwill impairment charge"],
+      "components": ["goodwill"],
+      "category": "accounting"
+    },
+    "fiscal_year": {
+      "canonical_form": "fiscal year",
+      "abbreviations": ["FY"],
+      "synonyms": ["fiscal year ended", "annual period"],
+      "components": [],
+      "category": "reporting"
+    },
+    "10k": {
+      "canonical_form": "annual report Form 10-K",
+      "abbreviations": ["10-K"],
+      "synonyms": ["annual report", "Form 10-K", "annual filing"],
+      "components": [],
+      "category": "reporting"
+    },
+    "10q": {
+      "canonical_form": "quarterly report Form 10-Q",
+      "abbreviations": ["10-Q"],
+      "synonyms": ["quarterly report", "Form 10-Q", "quarterly filing"],
+      "components": [],
+      "category": "reporting"
+    },
+    "mda": {
+      "canonical_form": "management discussion and analysis",
+      "abbreviations": ["MD&A"],
+      "synonyms": ["management's discussion and analysis", "MD&A section"],
+      "components": [],
+      "category": "reporting"
+    },
+    "segment": {
+      "canonical_form": "business segment",
+      "abbreviations": [],
+      "synonyms": ["operating segment", "reportable segment", "business segments", "reportable segments"],
+      "components": [],
+      "category": "reporting"
+    },
+    "restructuring": {
+      "canonical_form": "restructuring charges",
+      "abbreviations": [],
+      "synonyms": ["restructuring costs", "restructuring expenses", "restructuring and impairment charges"],
+      "components": [],
+      "category": "accounting"
+    },
+    "acquisition": {
+      "canonical_form": "acquisitions",
+      "abbreviations": ["M&A"],
+      "synonyms": ["business combination", "business combinations", "business acquisition", "mergers and acquisitions"],
+      "components": ["purchase price", "goodwill", "intangible assets"],
+      "category": "reporting"
+    },
+    "working_capital": {
+      "canonical_form": "working capital",
+      "abbreviations": [],
+      "synonyms": ["net working capital"],
+      "components": ["current assets", "total current assets", "current liabilities", "total current liabilities"],
+      "category": "balance_sheet"
+    }
+  }
+}
