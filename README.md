@@ -2,6 +2,8 @@
 
 A RAG (Retrieval-Augmented Generation) powered SEC financial report Q&A system. Upload 10-K/10-Q PDF filings and ask questions in natural language — supports cross-company comparison, auto chart generation, and financial ratio calculation.
 
+[中文文档](README_CN.md)
+
 ## Screenshots
 
 <div align="center">
