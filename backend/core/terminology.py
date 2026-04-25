@@ -98,7 +98,7 @@ class TerminologyDict:
     def expand_query(self, text: str) -> str:
         """Expand recognized terms in query text.
 
-        For each matched term, appends: canonical_form + components.
+        For each matched term, appends: canonical_form + synonyms + components.
         Original text is preserved.
         """
         expansions = []
@@ -108,6 +108,7 @@ class TerminologyDict:
         for term_key in matched_keys:
             entry = self.terms[term_key]
             parts = [entry["canonical_form"]]
+            parts.extend(entry.get("synonyms", []))
             parts.extend(entry.get("components", []))
             expansions.append(", ".join(parts))
 
@@ -117,27 +118,33 @@ class TerminologyDict:
         return f"{text} [Related terms: {'; '.join(expansions)}]"
 
     def enrich_chunk_text(self, text: str) -> tuple[str, list[str]]:
-        """Enrich chunk text by appending detected term canonical forms.
+        """Enrich chunk text by appending detected term info.
 
+        Appends canonical_form + synonyms + components for each matched term.
         Returns (enriched_text, list_of_detected_term_keys).
-        Keeps appended text short to avoid shifting embedding centroid.
         """
         detected = []
-        canonical_forms = []
+        enrichment_parts = []
 
         matched_keys = self._match_terms(text)
 
         for term_key in matched_keys:
             entry = self.terms[term_key]
             detected.append(term_key)
-            canonical_forms.append(entry["canonical_form"])
 
-        if not canonical_forms:
+            parts = [entry["canonical_form"]]
+            synonyms = entry.get("synonyms", [])
+            components = entry.get("components", [])
+            if synonyms:
+                parts.append("Syn: " + ", ".join(synonyms))
+            if components:
+                parts.append("Comp: " + ", ".join(components))
+            enrichment_parts.append(" | ".join(parts))
+
+        if not enrichment_parts:
             return text, detected
 
-        # Keep enrichment short: only canonical forms, comma-separated
-        enrichment = " ".join(canonical_forms)
-        enriched = f"{text} [Terms: {enrichment}]"
+        enriched = f"{text} [Terms: {'; '.join(enrichment_parts)}]"
         return enriched, detected
 
     def get_all_abbreviations(self) -> set[str]:

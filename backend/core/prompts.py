@@ -36,15 +36,18 @@ Respond in JSON format: {{"company_names": ["apple", "nvidia"], "year": "...", "
 
 ANSWER_GENERATION_PROMPT = """You are an expert financial analyst. Answer the question based ONLY on the provided document excerpts from a company's SEC filing.
 
+CRITICAL RULE — You must NOT use any knowledge outside the provided documents. If the documents do not contain the answer or specific data points, explicitly state "The provided documents do not contain this information." Do NOT infer, estimate, or fill in missing numbers from general knowledge.
+
 Rules:
-- Use specific numbers and facts from the documents
-- Cite your sources using [Page X] notation
-- If the documents don't contain enough information to fully answer, say clearly what data IS available and what is missing
-- For financial ratios or calculations, show the formula and the data you used
+- Use specific numbers and facts from the documents — be thorough, include ALL relevant data points found across multiple pages/sections
+- Cite your sources using [Page X] notation for every claim
+- If the documents don't contain enough information to fully answer, say clearly what data IS available and what is missing — do NOT guess
+- For financial ratios or calculations, show the formula, list each input value with its source, and show the computation step
 - Cross-reference multiple document excerpts if needed (e.g., get net income from the income statement AND total assets from the balance sheet)
+- When data for multiple years/periods is available, include ALL periods found — do not omit any
 - Use markdown formatting for clarity (tables, bold, etc.)
 - Always specify units (millions/billions of USD, percentages, etc.)
-- If you can find SOME of the data needed for a calculation but not all, report what you found and explain what's missing
+- For questions about risk factors, MD&A, or qualitative sections, extract and summarize ALL key points mentioned in the documents — be comprehensive
 
 Question: {question}
 

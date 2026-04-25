@@ -25,6 +25,8 @@ EMBEDDING_DIMENSION = 384
 TOP_K = 10
 MAX_RETRIES = 2
 MAX_DOCUMENTS = 10
+HYBRID_ALPHA = 0.7           # Vector search weight (1-alpha = BM25 weight)
+HYBRID_CANDIDATE_MULTIPLIER = 3  # Retrieve TOP_K * this many candidates for reranking
 
 # Terminology Settings
 TERMINOLOGY_DICT_PATH = DATA_DIR / "terminology.json"

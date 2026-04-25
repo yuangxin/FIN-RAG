@@ -1,6 +1,6 @@
 from core.state import RAGState
 from core.vector_store import vector_store
-from config import TOP_K
+from config import TOP_K, HYBRID_ALPHA, HYBRID_CANDIDATE_MULTIPLIER
 
 # Keywords that indicate financial statement data is needed
 FINANCIAL_KEYWORDS = [
@@ -11,9 +11,58 @@ FINANCIAL_KEYWORDS = [
     "operating margin", "net margin", "free cash flow", "per share",
 ]
 
+# Keywords that indicate risk/MD&A sections are needed
+RISK_KEYWORDS = [
+    "risk factor", "risk", "uncertainty", "challenge", "threat",
+    "competitive", "regulation", "regulatory", "litigation", "legal",
+    "cybersecurity", "data breach", "privacy", "supply chain disruption",
+    "geopolitical", "tariff", "trade war", "macroeconomic",
+    "key risk", "material risk", "concentration",
+]
+
+
+def _normalize_scores(scores: list[float]) -> list[float]:
+    """Min-Max normalize scores to [0, 1]."""
+    if not scores:
+        return []
+    min_s, max_s = min(scores), max(scores)
+    if max_s == min_s:
+        return [1.0] * len(scores)
+    return [(s - min_s) / (max_s - min_s) for s in scores]
+
+
+def _hybrid_rerank(query: str, docs_with_scores: list[tuple], top_k: int) -> list:
+    """Rerank docs using weighted fusion of vector scores and BM25 scores."""
+    if not docs_with_scores:
+        return []
+
+    docs = [d for d, s in docs_with_scores]
+    vector_scores = [s for d, s in docs_with_scores]
+
+    # BM25 scoring - tokenize on word boundaries for better matching
+    from rank_bm25 import BM25Okapi
+    import re
+    tokenized_corpus = [re.findall(r'\b\w+\b', doc.page_content.lower()) for doc in docs]
+    tokenized_query = re.findall(r'\b\w+\b', query.lower())
+    bm25 = BM25Okapi(tokenized_corpus)
+    bm25_scores = bm25.get_scores(tokenized_query).tolist()
+
+    # Normalize: vector distance (lower=better) → convert to similarity (higher=better)
+    norm_vector = _normalize_scores([-s for s in vector_scores])
+    norm_bm25 = _normalize_scores(bm25_scores)
+
+    # Weighted fusion
+    fused = [
+        (HYBRID_ALPHA * v + (1 - HYBRID_ALPHA) * b, doc)
+        for doc, v, b in zip(docs, norm_vector, norm_bm25)
+    ]
+    fused.sort(key=lambda x: -x[0])
+
+    return [doc for _, doc in fused[:top_k]]
+
 
 def retriever(state: RAGState) -> dict:
-    """Node 3: Retrieve Top-K documents from ChromaDB with metadata filtering."""
+    """Node 3: Retrieve documents using hybrid search (vector + BM25 reranking)."""
     query = state.get("rewritten_question", "") or state.get("question", "")
     original_question = state.get("question", "")
 
@@ -38,24 +87,29 @@ def retriever(state: RAGState) -> dict:
     company_names = state.get("company_names") or []
     single_company = state.get("company_name")
 
+    # Fetch more candidates for BM25 reranking
+    candidate_k = TOP_K * HYBRID_CANDIDATE_MULTIPLIER
     docs = []
 
     if company_names:
-        # Search each company separately and merge results
-        per_company_k = max(TOP_K // len(company_names), 5)
+        per_company_k = max(candidate_k // len(company_names), 5)
         for company in company_names:
             company_filter = dict(filters)
             company_filter["company_name"] = company
-            company_docs = vector_store.similarity_search(query, k=per_company_k, filters=company_filter)
-            docs.extend(company_docs)
+            scored = vector_store.similarity_search_with_score(query, k=per_company_k, filters=company_filter)
+            docs.extend(scored)
     elif single_company:
         filters["company_name"] = single_company
-        docs = vector_store.similarity_search(query, k=TOP_K, filters=filters)
+        scored = vector_store.similarity_search_with_score(query, k=candidate_k, filters=filters)
+        docs = list(scored)
     else:
-        docs = vector_store.similarity_search(query, k=TOP_K)
+        scored = vector_store.similarity_search_with_score(query, k=candidate_k)
+        docs = list(scored)
 
-    # Supplemental search: if the query mentions financial metrics,
-    # also retrieve from Item 8 (Financial Statements) directly
+    # BM25 hybrid rerank
+    docs = _hybrid_rerank(query, docs, TOP_K)
+
+    # Supplemental search: financial keywords → item_8_financials
     combined_lower = (query + " " + original_question).lower()
     needs_financials = any(kw in combined_lower for kw in FINANCIAL_KEYWORDS)
 
@@ -67,19 +121,37 @@ def retriever(state: RAGState) -> dict:
             section_filter["section"] = "item_8_financials"
             fin_docs = vector_store.similarity_search(query, k=5, filters=section_filter)
 
-            # Deduplicate by page number
             existing_pages = {doc.metadata.get("page_no") for doc in docs}
             for doc in fin_docs:
                 if doc.metadata.get("page_no") not in existing_pages:
                     docs.append(doc)
                     existing_pages.add(doc.metadata.get("page_no"))
 
+    # Supplemental search: risk keywords → item_1a_risk + item_7_mda
+    needs_risk = any(kw in combined_lower for kw in RISK_KEYWORDS)
+
+    if needs_risk:
+        companies_for_risk = company_names if company_names else ([single_company] if single_company else [])
+        for company in companies_for_risk:
+            for section in ["item_1a_risk", "item_7_mda"]:
+                section_filter = dict(filters)
+                section_filter["company_name"] = company
+                section_filter["section"] = section
+                risk_scored = vector_store.similarity_search_with_score(query, k=8, filters=section_filter)
+                risk_docs = _hybrid_rerank(query, risk_scored, 5)
+
+                existing_pages = {doc.metadata.get("page_no") for doc in docs}
+                for doc in risk_docs:
+                    if doc.metadata.get("page_no") not in existing_pages:
+                        docs.append(doc)
+                        existing_pages.add(doc.metadata.get("page_no"))
+
     # Debug logging
     print(f"\n[RETRIEVER] Query: {query[:100]}")
     print(f"[RETRIEVER] Companies: {company_names or single_company or 'none'}")
     print(f"[RETRIEVER] Filters: {filters}")
-    print(f"[RETRIEVER] Needs financials: {needs_financials}")
-    print(f"[RETRIEVER] Found {len(docs)} docs")
+    print(f"[RETRIEVER] Needs financials: {needs_financials} | Needs risk: {needs_risk}")
+    print(f"[RETRIEVER] Hybrid reranked: {len(docs)} docs (alpha={HYBRID_ALPHA})")
     for i, doc in enumerate(docs[:3]):
         print(f"  Doc {i}: company={doc.metadata.get('company_name','')} section={doc.metadata.get('section','')} page={doc.metadata.get('page_no','')} type={doc.metadata.get('chunk_type','')} text={doc.page_content[:80]}...")
 

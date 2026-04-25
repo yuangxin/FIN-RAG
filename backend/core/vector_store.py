@@ -50,6 +50,14 @@ class VectorStore:
             kwargs["filter"] = chroma_filter
         return self.vectorstore.similarity_search(query, **kwargs)
 
+    def similarity_search_with_score(self, query: str, k: int = 10, filters: dict | None = None):
+        """Return documents with cosine distance scores (lower = more similar)."""
+        chroma_filter = self._build_filter(filters)
+        kwargs = {"k": k}
+        if chroma_filter:
+            kwargs["filter"] = chroma_filter
+        return self.vectorstore.similarity_search_with_score(query, **kwargs)
+
     def delete_document(self, doc_id: str):
         self.vectorstore.delete(where={"doc_id": doc_id})
 
