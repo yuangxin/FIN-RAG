@@ -319,6 +319,15 @@ npm run dev
 - **Context Recall** — 是否检索到所有相关文档（验证术语增强检索）
 - **Answer Relevancy** — 答案是否切题（验证查询改写）
 
+### 评估结果
+
+| Metric | Score |
+|--------|-------|
+| Faithfulness | 0.70 |
+| Context Precision | 0.77 |
+| Context Recall | 0.88 |
+| Answer Relevancy | 0.99 |
+
 ## 测试
 
 ```bash
