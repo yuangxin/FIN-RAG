@@ -1,8 +1,8 @@
 # 10-K Financial QA System
 
-基于 RAG（检索增强生成）的 SEC 财报智能问答系统。用户上传 10-K/10-Q PDF，即可通过自然语言对财报内容进行智能问答，支持跨公司对比、自动图表生成与财务比率计算。
+An intelligent SEC financial document Q&A system powered by RAG (Retrieval-Augmented Generation). Upload 10-K/10-Q PDF filings, ask questions in natural language, and get cited answers with cross-company comparison, auto chart generation, and financial ratio calculation.
 
-[English](README.md)
+[中文文档](README_CN.md)
 
 ## Screenshots
 
@@ -25,7 +25,7 @@
 
 </div>
 
-## 技术架构
+## Architecture
 
 ```mermaid
 graph LR
@@ -62,97 +62,97 @@ graph LR
     PDF -->|Chunk + Enrich| VS
 ```
 
-## RAG 管道详解
+## RAG Pipeline
 
-核心是一个 4 节点 LangGraph `StateGraph`，带条件重试路由：
+The core is a 4-node LangGraph `StateGraph` with conditional retry routing:
 
 ```
 START → query_rewriter → metadata_extractor → retriever ──→ route_after_retrieval
                                                               │
-                                                    有文档? → answer_generator → END
-                                                    无文档 + 重试次数未满? → increment_retry → query_rewriter
+                                                    docs found? → answer_generator → END
+                                                    no docs + retries left? → increment_retry → query_rewriter
 ```
 
-### 节点 1：查询改写（`nodes/query_rewriter.py`）
+### Node 1: Query Rewriter (`nodes/query_rewriter.py`)
 
-LLM 改写前先做两阶段扩展：
+Two-stage expansion before LLM rewriting:
 
-1. **术语扩展**（确定性，不调用 LLM）：将用户查询与 550+ 条金融术语词典匹配，自动追加同义词、标准形式和组成部分。例如查询中包含 "EPS"，会自动扩展为 "Earnings Per Share, net income, weighted average shares"。
-2. **LLM 改写**（DeepSeek）：将缩写展开为完整术语、添加金融上下文（单位、同义词），中文查询翻译为英文。对于比率类问题，显式包含计算所需的组成部分（如 ROC → "net income, total equity, total debt, invested capital"）。
+1. **Terminology Expansion** (deterministic, no LLM call): Matches user query against a 550+ financial terminology dictionary, automatically appending synonyms, standard forms, and components. For example, a query containing "EPS" is expanded to "Earnings Per Share, net income, weighted average shares".
+2. **LLM Rewriting** (DeepSeek): Expands abbreviations into full terms, adds financial context (units, synonyms), translates Chinese queries to English. For ratio-type questions, explicitly includes calculation components (e.g., ROC → "net income, total equity, total debt, invested capital").
 
-### 节点 2：元数据提取（`nodes/metadata_extractor.py`）
+### Node 2: Metadata Extractor (`nodes/metadata_extractor.py`)
 
-LLM 从问题中提取结构化元数据：
+LLM extracts structured metadata from the question:
 
-- **company_names**（列表）：支持多公司查询，如 "Compare Apple and NVIDIA's revenue"
-- **year**：财年过滤
-- **quarter**：季度过滤（Q1-Q4，年度查询为空）
+- **company_names** (list): Supports multi-company queries like "Compare Apple and NVIDIA's revenue"
+- **year**: Fiscal year filter
+- **quarter**: Quarter filter (Q1-Q4, empty for annual queries)
 
-公司名通过可配置的别名映射表（`config.py: COMPANY_ALIASES`）标准化，如 `aapl → apple`、`googl → google`。
+Company names are normalized via a configurable alias mapping (`config.py: COMPANY_ALIASES`), e.g., `aapl → apple`, `googl → google`.
 
-### 节点 3：混合检索器（`nodes/retriever.py`）
+### Node 3: Hybrid Retriever (`nodes/retriever.py`)
 
-接收 Node 2 提取的元数据（company_names, year, quarter），作为 ChromaDB `where` 过滤条件贯穿所有检索步骤。检索流程：
+Receives metadata from Node 2 (company_names, year, quarter) as ChromaDB `where` filters across all retrieval steps:
 
-**Step 1 — 主混合搜索（向量 + BM25 重排序）**
+**Step 1 — Main Hybrid Search (Vector + BM25 Reranking)**
 
-先通过 ChromaDB 向量相似度召回 `TOP_K × HYBRID_CANDIDATE_MULTIPLIER`（30）个候选文档，再用加权融合重排序：
+Over-recalls `TOP_K × HYBRID_CANDIDATE_MULTIPLIER` (30) candidates via ChromaDB vector similarity, then reranks using weighted fusion:
 
 ```
-final_score = α × 归一化向量相似度 + (1 - α) × 归一化BM25分数
+final_score = α × normalized_vector_similarity + (1 - α) × normalized_BM25_score
 ```
 
-- 向量分数（余弦距离）转换为相似度后做 Min-Max 归一化到 [0, 1]
-- BM25 分数通过 `rank_bm25.BM25Okapi` 计算，按词边界分词
-- `HYBRID_ALPHA = 0.7`（可配置）：偏向语义相似度但融入关键词匹配
-- 重排序后返回 `TOP_K = 10` 个文档
-- 多公司查询：按公司分别召回（均分检索预算）再合并重排序
-- 重试时（条件路由回退）：逐步放宽过滤条件——第 1 次去掉 `quarter`，第 2 次去掉 `year`
+- Vector scores (cosine distance) converted to similarity, then Min-Max normalized to [0, 1]
+- BM25 scores computed via `rank_bm25.BM25Okapi` with word-boundary tokenization
+- `HYBRID_ALPHA = 0.7` (configurable): Favors semantic similarity while incorporating keyword matching
+- Returns `TOP_K = 10` documents after reranking
+- Multi-company queries: Retrieves per company (splitting retrieval budget evenly) then merges and reranks
+- On retry: Progressively relaxes filters — first removes `quarter`, then removes `year`
 
-**Step 2 — 财务报表补充检索**
+**Step 2 — Financial Statement Supplemental Retrieval**
 
-当查询包含财务关键词（revenue, margin, EPS, ROE 等）时，额外直接检索 `item_8_financials` 区块——拉取最多 5 个财务报表 chunk，补充语义搜索可能遗漏的精确数值。
+When the query contains financial keywords (revenue, margin, EPS, ROE, etc.), additionally retrieves from `item_8_financials` section — pulling up to 5 financial statement chunks to supplement precise figures that semantic search may miss.
 
-**Step 3 — 风险章节补充检索**
+**Step 3 — Risk Section Supplemental Retrieval**
 
-当查询包含风险相关关键词（risk, threat, regulation, supply chain 等）时，额外检索 `item_1a_risk` 和 `item_7_mda` 区块，各最多 5 个 chunk，同样经过混合重排序。
+When the query contains risk-related keywords (risk, threat, regulation, supply chain, etc.), additionally retrieves from `item_1a_risk` and `item_7_mda` sections, up to 5 chunks each, also reranked via hybrid scoring.
 
-**Step 4 — 去重**
+**Step 4 — Deduplication**
 
-补充检索结果按 `page_no` 去重，避免同一页内容重复输入答案生成器。
+Supplemental retrieval results are deduplicated by `page_no` to avoid feeding duplicate content from the same page to the answer generator.
 
-### 条件路由（`edges/route_after_retrieval.py`）
+### Conditional Routing (`edges/route_after_retrieval.py`)
 
 ```python
-if 有检索结果 → answer_generator
-elif retry_count < MAX_RETRIES (2) → query_rewriter（经 increment_retry）
-else → answer_generator（空文档 → LLM 回答"未找到相关信息"）
+if has results → answer_generator
+elif retry_count < MAX_RETRIES (2) → query_rewriter (via increment_retry)
+else → answer_generator (empty docs → LLM responds "no relevant information found")
 ```
 
-### 节点 4：答案生成（`nodes/answer_generator.py`）
+### Node 4: Answer Generator (`nodes/answer_generator.py`)
 
-- 接收所有检索到的文档，格式化为 `[Page X] (section, type)` 标注
-- Prompt 强制要求仅基于文档回答："answer based ONLY on provided documents"
-- 生成引用（页码、章节、chunk 类型、摘要）用于溯源
-- **自动图表提取**：额外的非流式 LLM 调用判断 Q&A 是否涉及多点财务数据，若是则提取结构化图表 JSON（chart_type, series, data points）供前端渲染
+- Receives all retrieved documents, formatted with `[Page X] (section, type)` annotations
+- Prompt enforces document-only answering: "answer based ONLY on provided documents"
+- Generates citations (page number, section, chunk type, summary) for source tracing
+- **Auto chart extraction**: An additional non-streaming LLM call determines whether the Q&A involves multi-point financial data; if so, extracts structured chart JSON (chart_type, series, data points) for frontend rendering
 
-## PDF 解析与切分（`core/document_parser.py`）
+## PDF Parsing & Chunking (`core/document_parser.py`)
 
-### 10-K Section 感知切分
+### 10-K Section-Aware Chunking
 
-1. **章节边界检测**：每页文本与 16 个正则模式（`config.py: SECTION_PATTERNS`）匹配，识别 SEC Item 1 ~ Item 16 标题。构建页码-章节映射，使每个 chunk 继承所属章节元数据。
+1. **Section boundary detection**: Each page's text is matched against 16 regex patterns (`config.py: SECTION_PATTERNS`) to identify SEC Item 1 ~ Item 16 headings. A page-section mapping is built so each chunk inherits its section metadata.
 
-2. **文本切分**：以段落为首选分割单位。段落超过 `CHUNK_MAX_CHARS`（2000）时退化为句子级分割。`CHUNK_OVERLAP`（200 字符）保留前一个 chunk 末尾的上下文。
+2. **Text splitting**: Paragraphs are the preferred split unit. Paragraphs exceeding `CHUNK_MAX_CHARS` (2000) fall back to sentence-level splitting. `CHUNK_OVERLAP` (200 chars) preserves context from the end of the previous chunk.
 
-3. **表格保留**：pdfplumber 提取的表格作为**整块 chunk** 保留（不切分）。表格格式化为 `Header: Value | Header: Value` 行式文本。低于 `TABLE_MIN_CHARS`（30）的小表格被丢弃。
+3. **Table preservation**: Tables extracted by pdfplumber are kept as **whole chunks** (never split). Tables are formatted as `Header: Value | Header: Value` row-wise text. Tables below `TABLE_MIN_CHARS` (30) are discarded.
 
-4. **分页容错**：每页包裹在 try-catch 中。表格提取失败时降级为纯文本提取。页面不会被完全跳过。
+4. **Per-page error isolation**: Each page is wrapped in try-catch. On table extraction failure, degrades to text-only extraction. Pages are never skipped entirely.
 
-5. **元数据提取**：公司名和年份优先从文件名正则提取（如 `apple-2025.pdf`），失败时从首页文本分析。
+5. **Metadata extraction**: Company name and year are first extracted from the filename via regex (e.g., `apple-2025.pdf`), falling back to first-page text analysis.
 
-### Chunk 元数据结构
+### Chunk Metadata Structure
 
-每个 chunk 携带用于过滤和引用的元数据：
+Each chunk carries metadata used for filtering and citation:
 
 ```python
 {
@@ -161,127 +161,127 @@ else → answer_generator（空文档 → LLM 回答"未找到相关信息"）
     "year": "2025",
     "quarter": "",
     "page_no": 42,
-    "section": "item_8_financials",   # 10-K 章节标识
-    "chunk_type": "text" | "table",   # 用于引用显示
+    "section": "item_8_financials",   # 10-K section identifier
+    "chunk_type": "text" | "table",   # for citation display
     "chunk_index": 127,
-    "detected_terms": "eps,..."       # 术语增强信息
+    "detected_terms": "eps,..."       # terminology enrichment info
 }
 ```
 
-## 金融术语词典（`core/terminology.py`）
+## Financial Terminology Dictionary (`core/terminology.py`)
 
-`data/terminology.json` 中包含 550+ 条金融术语，提供**双侧增强**：
+`data/terminology.json` contains 550+ financial terms, providing **dual-side enhancement**:
 
-**查询侧**（`expand_query`）：LLM 改写前，匹配查询中的术语并追加标准形式、同义词和组成部分。确保 "EPS" 能匹配到包含 "earnings per share" 或 "net income per share" 的 chunk。
+**Query side** (`expand_query`): Before LLM rewriting, matches terms in the query and appends standard forms, synonyms, and components. Ensures "EPS" can match chunks containing "earnings per share" or "net income per share".
 
-**Chunk 侧**（`enrich_chunk_text`）：文档入库时，匹配 chunk 中的术语并追加同义词/组件信息后再做 embedding。例如包含 "EPS" 的 chunk 会嵌入额外上下文 "Earnings Per Share, Syn: net income per share, Comp: net income, weighted average shares"——大幅提升缩写词的语义匹配效果。
+**Chunk side** (`enrich_chunk_text`): During document ingestion, matches terms in chunks and appends synonym/component info before embedding. For example, a chunk containing "EPS" gets embedded with extra context "Earnings Per Share, Syn: net income per share, Comp: net income, weighted average shares" — significantly improving semantic matching for abbreviations.
 
-**匹配引擎**：使用合并正则模式（多词短语用字面匹配、单词用词边界断言），对完整词典做 O(n) 匹配——无需逐条迭代。
+**Matching engine**: Uses merged regex patterns (multi-word phrases via literal matching, single words via word boundary assertions) for O(n) matching against the full dictionary — no per-term iteration needed.
 
-## 向量存储（`core/vector_store.py`）
+## Vector Store (`core/vector_store.py`)
 
-ChromaDB 嵌入模式：
+ChromaDB embedded mode:
 
-- **批量入库**：以 `VECTOR_STORE_BATCH_SIZE`（100）为一批插入，避免大文档导致内存尖峰
-- **元数据过滤**：从 `{company_name, year, quarter, section}` 组合构建 ChromaDB `where` 子句
-- **单例模式**：`vector_store` 是模块级单例，跨请求共享
+- **Batch ingestion**: Inserts in batches of `VECTOR_STORE_BATCH_SIZE` (100) to avoid memory spikes with large documents
+- **Metadata filtering**: Builds ChromaDB `where` clauses from `{company_name, year, quarter, section}` combinations
+- **Singleton pattern**: `vector_store` is a module-level singleton shared across requests
 
-## WebSocket 协议（`/api/chat/ws`）
+## WebSocket Protocol (`/api/chat/ws`)
 
-客户端发送：`{"type": "question", "question": "..."}`
+Client sends: `{"type": "question", "question": "..."}`
 
-服务端流式推送：
-1. `{"type": "step", "node": "query_rewriter", "status": "started"}` — 每个节点开始时
-2. `{"type": "step", "node": "...", "status": "completed", "data": {...}}` — 节点完成，附带步骤数据
-3. `{"type": "token", "content": "..."}` — LLM 生成 token
+Server streams:
+1. `{"type": "step", "node": "query_rewriter", "status": "started"}` — when each node begins
+2. `{"type": "step", "node": "...", "status": "completed", "data": {...}}` — when node completes, with step data
+3. `{"type": "token", "content": "..."}` — during LLM generation
 4. `{"type": "done", "answer": "...", "citations": [...], "chart_data": {...}|null, "workflow_steps": [...]}`
 
-## API 接口
+## API Endpoints
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `POST` | `/api/documents/upload` | 上传 PDF，解析、切分、嵌入、存储 |
-| `GET` | `/api/documents` | 列出已上传文档 |
-| `DELETE` | `/api/documents/{doc_id}` | 删除文档及向量存储数据 |
-| `POST` | `/api/chat` | 同步问答 |
-| `WebSocket` | `/api/chat/ws` | 流式问答（pipeline 步骤 + Token 推送） |
-| `GET` | `/api/financial-data/{doc_id}` | 提取结构化财务指标 |
-| `GET` | `/api/health` | 健康检查 |
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/documents/upload` | Upload PDF, parse, chunk, embed, and store |
+| `GET` | `/api/documents` | List uploaded documents |
+| `DELETE` | `/api/documents/{doc_id}` | Delete document and its vector store data |
+| `POST` | `/api/chat` | Synchronous Q&A |
+| `WebSocket` | `/api/chat/ws` | Streaming Q&A (pipeline steps + token push) |
+| `GET` | `/api/financial-data/{doc_id}` | Extract structured financial metrics |
+| `GET` | `/api/health` | Health check |
 
-## 配置参数（`backend/config.py`）
+## Configuration (`backend/config.py`)
 
-所有参数集中管理：
+All parameters are centrally managed:
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `LLM_MODEL` | `deepseek-chat` | LLM 模型名 |
-| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | 384 维 sentence transformer |
-| `TOP_K` | 10 | 重排序后返回的文档数 |
-| `MAX_RETRIES` | 2 | 最大检索重试次数 |
-| `HYBRID_ALPHA` | 0.7 | 向量与 BM25 权重（0=纯 BM25，1=纯向量） |
-| `HYBRID_CANDIDATE_MULTIPLIER` | 3 | 过召回倍数 |
-| `CHUNK_MAX_CHARS` | 2000 | 文本 chunk 最大字符数 |
-| `CHUNK_OVERLAP` | 200 | chunk 间重叠字符数 |
-| `VECTOR_STORE_BATCH_SIZE` | 100 | 入库批次大小 |
-| `TERMINOLOGY_ENRICH_CHUNKS` | `True` | 启用 chunk 侧术语增强 |
-| `TERMINOLOGY_EXPAND_QUERIES` | `True` | 启用查询侧术语扩展 |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `LLM_MODEL` | `deepseek-chat` | LLM model name |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | 384-dim sentence transformer |
+| `TOP_K` | 10 | Number of documents to return after reranking |
+| `MAX_RETRIES` | 2 | Max retrieval retry attempts |
+| `HYBRID_ALPHA` | 0.7 | Vector vs BM25 weight (0=pure BM25, 1=pure vector) |
+| `HYBRID_CANDIDATE_MULTIPLIER` | 3 | Over-recall multiplier |
+| `CHUNK_MAX_CHARS` | 2000 | Max characters per text chunk |
+| `CHUNK_OVERLAP` | 200 | Overlap characters between chunks |
+| `VECTOR_STORE_BATCH_SIZE` | 100 | Ingestion batch size |
+| `TERMINOLOGY_ENRICH_CHUNKS` | `True` | Enable chunk-side terminology enrichment |
+| `TERMINOLOGY_EXPAND_QUERIES` | `True` | Enable query-side terminology expansion |
 
-## 项目结构
+## Project Structure
 
 ```
 backend/
-├── config.py              # 所有配置常量
-├── main.py                # FastAPI 入口 + CORS
+├── config.py              # All configuration constants
+├── main.py                # FastAPI entry + CORS
 ├── core/
-│   ├── llm.py             # DeepSeek LLM 封装（流式 + 非流式）
-│   ├── embeddings.py      # all-MiniLM-L6-v2 嵌入模型
-│   ├── vector_store.py    # ChromaDB + 元数据过滤 + 批量入库
-│   ├── document_parser.py # pdfplumber + 10-K 结构感知切分
-│   ├── state.py           # RAGState TypedDict（管道共享状态）
-│   ├── prompts.py         # 所有 Prompt 模板
-│   └── terminology.py     # 550+ 术语词典（查询扩展 + chunk 增强）
-├── nodes/                 # LangGraph 节点函数
-│   ├── query_rewriter.py  # 术语扩展 + LLM 改写
-│   ├── metadata_extractor.py # 公司/年份/季度提取
-│   ├── retriever.py       # 混合搜索 + 补充检索 + 去重
-│   └── answer_generator.py # 答案 + 引用 + 图表提取
+│   ├── llm.py             # DeepSeek LLM wrapper (streaming + non-streaming)
+│   ├── embeddings.py      # all-MiniLM-L6-v2 embedding model
+│   ├── vector_store.py    # ChromaDB + metadata filtering + batch ingestion
+│   ├── document_parser.py # pdfplumber + 10-K section-aware chunking
+│   ├── state.py           # RAGState TypedDict (shared pipeline state)
+│   ├── prompts.py         # All prompt templates
+│   └── terminology.py     # 550+ terminology dict (query expansion + chunk enrichment)
+├── nodes/                 # LangGraph node functions
+│   ├── query_rewriter.py  # Terminology expansion + LLM rewriting
+│   ├── metadata_extractor.py # Company/year/quarter extraction
+│   ├── retriever.py       # Hybrid search + supplemental retrieval + dedup
+│   └── answer_generator.py # Answer + citations + chart extraction
 ├── edges/
-│   └── route_after_retrieval.py # 条件重试路由
+│   └── route_after_retrieval.py # Conditional retry routing
 ├── workflows/
-│   └── rag_pipeline.py    # StateGraph 组装 + 编译
-├── services/              # 业务逻辑层
-├── routers/               # FastAPI 端点（documents, chat, financial_data）
+│   └── rag_pipeline.py    # StateGraph assembly + compilation
+├── services/              # Business logic layer
+├── routers/               # FastAPI endpoints (documents, chat, financial_data)
 ├── data/
-│   └── terminology.json   # 550+ 金融术语词典
+│   └── terminology.json   # 550+ financial terminology dictionary
 └── tests/
 
 frontend/                  # React + Vite + TailwindCSS + Recharts
 ├── src/
 │   ├── hooks/             # useChat (WebSocket), useDocuments
-│   ├── components/        # ChatPanel, FinancialCharts, DocumentSidebar 等
-│   ├── api/               # Axios 客户端 + WebSocket 工厂
-│   └── index.css          # Glassmorphism 样式
-└── vite.config.js         # 开发代理 → localhost:8000
+│   ├── components/        # ChatPanel, FinancialCharts, DocumentSidebar, etc.
+│   ├── api/               # Axios client + WebSocket factory
+│   └── index.css          # Glassmorphism styles
+└── vite.config.js         # Dev proxy → localhost:8000
 ```
 
-## 快速开始
+## Quick Start
 
-### 环境要求
+### Prerequisites
 
 - Python 3.10+
 - Node.js 18+
 - DeepSeek API Key
 
-### 1. 配置
+### 1. Configuration
 
 ```bash
-# 在项目根目录创建 .env
+# Create .env at project root
 echo "DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxx" > .env
 ```
 
-在 [platform.deepseek.com](https://platform.deepseek.com/) 注册获取 API Key。
+Get your API key at [platform.deepseek.com](https://platform.deepseek.com/).
 
-### 2. 启动后端
+### 2. Start Backend
 
 ```bash
 cd backend
@@ -289,7 +289,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### 3. 启动前端
+### 3. Start Frontend
 
 ```bash
 cd frontend
@@ -297,39 +297,29 @@ npm install
 npm run dev
 ```
 
-### 4. 使用
+### 4. Usage
 
-1. 打开 http://localhost:5173
-2. 左侧上传 PDF 财报（文件名含公司名和年份，如 `apple-2025.pdf`）
-3. 在聊天框提问（支持中英文）
+1. Open http://localhost:5173
+2. Upload a PDF filing on the left sidebar (filename should contain company name and year, e.g., `apple-2025.pdf`)
+3. Ask questions in the chat box (supports English and Chinese)
 
-### 示例问题
+### Example Questions
 
 - "What are Apple's key risk factors?"
 - "Describe NVIDIA's business segments"
 - "Compare Apple and NVIDIA's revenue"
 - "Calculate Apple's gross margin and net margin for 2025"
 
-## RAGAS 评估
+## RAGAS Evaluation
 
-使用 RAGAS（v0.4+）进行系统性管道评估，见 `backend/eval_ragas.ipynb`。评估指标：
+Systematic pipeline evaluation using RAGAS (v0.4+), see `backend/eval_ragas.ipynb`. Metrics:
 
-- **Faithfulness** — 答案是否仅基于检索文档（验证无幻觉检查器的设计）
-- **Context Precision** — 检索文档的相关性（验证 Top-10 无评分策略）
-- **Context Recall** — 是否检索到所有相关文档（验证术语增强检索）
-- **Answer Relevancy** — 答案是否切题（验证查询改写）
+- **Faithfulness** — Is the answer grounded only in retrieved documents? (Validates the no-hallucination-checker design)
+- **Context Precision** — Are retrieved documents relevant? (Validates the Top-10 without grading approach)
+- **Context Recall** — Were all relevant documents retrieved? (Validates terminology-enhanced retrieval)
+- **Answer Relevancy** — Does the answer address the question? (Validates query rewriting)
 
-## 测试
-
-```bash
-cd backend
-pytest tests/ -v
-```
-
-## License
-
-MIT
-
+## Testing
 
 ```bash
 cd backend
