@@ -319,6 +319,15 @@ Systematic pipeline evaluation using RAGAS (v0.4+), see `backend/eval_ragas.ipyn
 - **Context Recall** — Were all relevant documents retrieved? (Validates terminology-enhanced retrieval)
 - **Answer Relevancy** — Does the answer address the question? (Validates query rewriting)
 
+### Evaluation Results
+
+| Metric | Score |
+|--------|-------|
+| Faithfulness | 0.70 |
+| Context Precision | 0.77 |
+| Context Recall | 0.88 |
+| Answer Relevancy | 0.99 |
+
 ## Testing
 
 ```bash
